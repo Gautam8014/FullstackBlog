@@ -1,11 +1,12 @@
 const express= require("express");
 const bcrypt= require("bcrypt")
-
+const jwt = require("jsonwebtoken")
+require("dotenv").config()
 
 
 
  const {connection}= require("./config/db")
-// const moviecontroller= require("./controller/movie.controller")
+
 const{UserModel}= require("./models/User.model")
 
 const app = express();
@@ -13,12 +14,14 @@ let port=8000;
 
 
 app.use(express.json())
-// app.use("/movie",moviecontroller )  //http://localhost:8000/movie
+
 
 app.get("/",(req, res)=>{
    res.send("base Api endpoint")
 })
 
+
+//signup
 
 app.post("/signup", async (req, res)=>{
    const{name, email, password,age,phone_number}=req.body;
@@ -42,10 +45,33 @@ app.post("/signup", async (req, res)=>{
   });
 
 
+//login
+  app.post("/login",async(req, res)=>{
+   const{email,password}=req.body;
+   const user= await UserModel.findOne({email})
+ 
 
+   if(!user){
+      res.send("sign up first")
+   }else{
+      const hashed_password= user.password
+      bcrypt.compare(password, hashed_password, function(err, result) {
+         // result == true
 
-
+         if(result){
+            let token = jwt.sign({ user_id : user._id  }, process.env.Secret_key);
+            res.send({msg : "login successful", token:token})
+         }else{
+            res.send("login failed,invalid credential")
+         }
+     });
+   }
+  })
 })
+
+
+
+
 
 
 
